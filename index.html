@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secrets Scanner Bookmarklet</title>
+<style>
+:root {
+  --bg: #faf5ee;
+  --surface: #ffffff;
+  --ink: #1a0f0c;
+  --ink-soft: #4a3530;
+  --rule: #d8c8b8;
+  --alert: #8b0a14;
+  --alert-deep: #6a060f;
+  --alert-soft: #f5d8d8;
+  --warn: #a85800;
+  --code-bg: #f0e6d6;
+  --hi: #fff7cc;
+}
+[data-theme="dark"] {
+  --bg: #1a100c;
+  --surface: #2a1e18;
+  --ink: #f0e0d0;
+  --ink-soft: #c0a896;
+  --rule: #4a3a30;
+  --alert: #ff5a64;
+  --alert-deep: #ff8088;
+  --alert-soft: #4a1a1c;
+  --warn: #e8a060;
+  --code-bg: #14080c;
+  --hi: #4a3a14;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2.5rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1000px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 4px double var(--alert);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+}
+h1 {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--alert);
+}
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-top: 0.25rem;
+  letter-spacing: 0.02em;
+}
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--alert); color: var(--alert); }
+.lede {
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  max-width: 65ch;
+}
+section {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--alert);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--ink);
+}
+p { margin-bottom: 0.85rem; font-size: 0.92rem; }
+ol, ul { margin: 0.5rem 0 1rem 1.25rem; }
+li { margin-bottom: 0.4rem; font-size: 0.92rem; }
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.82rem;
+}
+code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.35rem;
+  border-radius: 2px;
+}
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.bookmarklet {
+  display: inline-block;
+  background: var(--alert);
+  color: var(--surface);
+  padding: 0.85rem 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--alert-deep);
+  border-radius: 2px;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  cursor: grab;
+}
+[data-theme="dark"] .bookmarklet {
+  color: var(--bg) !important;
+}
+.bookmarklet:hover { background: var(--alert-deep); }
+.bookmarklet:active { cursor: grabbing; }
+.tester {
+  margin-top: 1rem;
+}
+textarea {
+  width: 100%;
+  min-height: 200px;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  resize: vertical;
+  border-radius: 2px;
+}
+textarea:focus { outline: 2px solid var(--alert); outline-offset: 1px; }
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+button {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.25rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+button.primary {
+  background: var(--alert);
+  border-color: var(--alert);
+  color: var(--surface);
+  font-weight: 700;
+}
+[data-theme="dark"] button.primary {
+  color: var(--bg) !important;
+}
+button.primary:hover { background: var(--alert-deep); border-color: var(--alert-deep); }
+button:hover { border-color: var(--alert); }
+.findings { margin-top: 1.25rem; }
+.finding {
+  background: var(--alert-soft);
+  border-left: 4px solid var(--alert);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.65rem;
+  border-radius: 2px;
+}
+.finding-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.finding-type {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--alert-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+[data-theme="dark"] .finding-type { color: var(--alert-deep); }
+.finding-count {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.finding-sample {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+  background: var(--surface);
+  padding: 0.5rem;
+  border-radius: 2px;
+  word-break: break-all;
+  color: var(--ink);
+}
+.no-findings {
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--code-bg);
+  border-radius: 2px;
+}
+.pattern-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.85rem;
+}
+.pattern-name { font-weight: 600; color: var(--alert); }
+[data-theme="dark"] .pattern-name { color: var(--alert-deep); }
+.pattern-desc { color: var(--ink-soft); }
+footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+footer a { color: var(--alert); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+.warning {
+  background: var(--hi);
+  border: 1px solid var(--warn);
+  padding: 0.85rem 1rem;
+  border-radius: 2px;
+  font-size: 0.88rem;
+  margin: 1rem 0;
+  color: var(--ink);
+}
+.warning strong { color: var(--warn); }
+@media (max-width: 640px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.3rem; }
+  .pattern-grid { grid-template-columns: 1fr; gap: 0.15rem 0; }
+  .pattern-name { margin-top: 0.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Secrets Scanner</h1>
+    <div class="subtitle">Bookmarklet that scans the current page for exposed API keys</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">Drag the red button below to your bookmarks bar. On any page, click the bookmark to scan the page's HTML and visible text for patterns matching common API keys, tokens, and credentials. Findings appear in an alert. Useful for auditing your own pages before deploy, and for finding accidentally-exposed keys in source maps, comments, or copy-pasted error messages.</p>
+
+<section>
+  <h2>The bookmarklet</h2>
+  <p>Drag this to your bookmarks bar:</p>
+  <p><a class="bookmarklet" id="bookmarklet" href="#">Scan for secrets</a></p>
+  <div class="warning"><strong>Heads up:</strong> bookmarklets run JavaScript on the current page. This one only reads the page contents and shows a result; it does not exfiltrate anything. You can verify by reading the source below.</div>
+
+  <h3>Or paste manually into a new bookmark</h3>
+  <p>If your browser doesn't support drag-to-bookmarks, create a new bookmark with this URL:</p>
+  <pre id="bookmarklet-code"></pre>
+</section>
+
+<section>
+  <h2>Test it here</h2>
+  <p>Paste any text (HTML, JSON, source code, error logs) and click Scan. Same patterns the bookmarklet uses.</p>
+  <div class="tester">
+    <textarea id="test-input" placeholder="Paste text to scan..." spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+    <div class="btn-row">
+      <button class="primary" id="scan-btn" type="button">Scan</button>
+      <button id="sample-btn" type="button">Load sample</button>
+      <button id="clear-btn" type="button">Clear</button>
+    </div>
+    <div class="findings" id="findings"></div>
+  </div>
+</section>
+
+<section>
+  <h2>What it detects</h2>
+  <p>Pattern matchers for common credential formats. False positives are possible; review every finding.</p>
+  <div class="pattern-grid">
+    <div class="pattern-name">sk-ant-...</div>
+    <div class="pattern-desc">Anthropic API key</div>
+    <div class="pattern-name">sk-...</div>
+    <div class="pattern-desc">OpenAI / generic "sk-" key</div>
+    <div class="pattern-name">ghp_, gho_, ghu_, ghs_, ghr_</div>
+    <div class="pattern-desc">GitHub personal access tokens, OAuth tokens, server tokens</div>
+    <div class="pattern-name">github_pat_...</div>
+    <div class="pattern-desc">GitHub fine-grained personal access tokens</div>
+    <div class="pattern-name">xoxb-, xoxp-, xoxa-, xoxr-, xoxs-</div>
+    <div class="pattern-desc">Slack tokens (bot, user, app, refresh, configuration)</div>
+    <div class="pattern-name">AKIA...</div>
+    <div class="pattern-desc">AWS access key ID</div>
+    <div class="pattern-name">AIza...</div>
+    <div class="pattern-desc">Google API key</div>
+    <div class="pattern-name">eyJ...</div>
+    <div class="pattern-desc">JSON Web Token (any)</div>
+    <div class="pattern-name">SG.</div>
+    <div class="pattern-desc">SendGrid API key</div>
+    <div class="pattern-name">key-...</div>
+    <div class="pattern-desc">Mailgun API key</div>
+    <div class="pattern-name">Bearer ...</div>
+    <div class="pattern-desc">Authorization header values containing bearer tokens</div>
+    <div class="pattern-name">-----BEGIN ... PRIVATE KEY-----</div>
+    <div class="pattern-desc">PEM-encoded private keys</div>
+  </div>
+</section>
+
+<section>
+  <h2>Limitations</h2>
+  <ul>
+    <li>Pattern matching only. Will miss secrets that don't follow a known prefix format.</li>
+    <li>False positives are likely if your page contains sample/dummy keys, documentation, or test fixtures.</li>
+    <li>Doesn't decompile WASM, doesn't follow imports, doesn't read service worker storage. Scans the rendered page.</li>
+    <li>Doesn't scan source maps unless they're inlined. For source-map auditing, use a dedicated tool like trufflehog.</li>
+  </ul>
+</section>
+
+<footer>
+  <div>Secrets Scanner Bookmarklet. MIT licensed. <a href="https://github.com/0xelitesystem/secrets-scanner-bookmarklet" target="_blank" rel="noopener">View source</a>.</div>
+  <div>Single file, runs offline.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Theme
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+// Patterns: name + regex + description
+const PATTERNS = [
+  { name: "Anthropic API key", regex: /sk-ant-[a-zA-Z0-9_\-]{20,}/g },
+  { name: "OpenAI / generic sk- key", regex: /\bsk-[a-zA-Z0-9_\-]{20,}\b/g },
+  { name: "GitHub PAT (classic)", regex: /\bghp_[a-zA-Z0-9]{36,}\b/g },
+  { name: "GitHub OAuth", regex: /\bgho_[a-zA-Z0-9]{36,}\b/g },
+  { name: "GitHub user-to-server", regex: /\bghu_[a-zA-Z0-9]{36,}\b/g },
+  { name: "GitHub server-to-server", regex: /\bghs_[a-zA-Z0-9]{36,}\b/g },
+  { name: "GitHub refresh token", regex: /\bghr_[a-zA-Z0-9]{36,}\b/g },
+  { name: "GitHub fine-grained PAT", regex: /\bgithub_pat_[a-zA-Z0-9_]{60,}\b/g },
+  { name: "Slack bot token", regex: /\bxoxb-[a-zA-Z0-9-]{20,}\b/g },
+  { name: "Slack user token", regex: /\bxoxp-[a-zA-Z0-9-]{20,}\b/g },
+  { name: "Slack app/refresh/config token", regex: /\bxox[arsc]-[a-zA-Z0-9-]{20,}\b/g },
+  { name: "AWS access key ID", regex: /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g },
+  { name: "Google API key", regex: /\bAIza[a-zA-Z0-9_\-]{35}\b/g },
+  { name: "JWT", regex: /\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g },
+  { name: "SendGrid API key", regex: /\bSG\.[a-zA-Z0-9_\-]{22}\.[a-zA-Z0-9_\-]{43}\b/g },
+  { name: "Mailgun API key", regex: /\bkey-[a-z0-9]{32}\b/g },
+  { name: "Stripe live secret", regex: /\bsk_live_[a-zA-Z0-9]{24,}\b/g },
+  { name: "Stripe test secret", regex: /\bsk_test_[a-zA-Z0-9]{24,}\b/g },
+  { name: "Stripe publishable", regex: /\bpk_(live|test)_[a-zA-Z0-9]{24,}\b/g },
+  { name: "Bearer token in header", regex: /Authorization:\s*Bearer\s+[a-zA-Z0-9._\-]{20,}/gi },
+  { name: "PEM private key", regex: /-----BEGIN [A-Z ]*PRIVATE KEY-----/g },
+];
+
+// The actual scanner code that the bookmarklet runs (must be standalone)
+const SCANNER_FN = `(function(){
+  var P=${JSON.stringify(PATTERNS.map(p => ({ n: p.name, r: p.regex.source })))};
+  var src=document.documentElement.outerHTML;
+  var found=[];
+  for(var i=0;i<P.length;i++){
+    var re=new RegExp(P[i].r,'g');
+    var m,seen={};
+    while((m=re.exec(src))!==null){
+      if(!seen[m[0]]){seen[m[0]]=1;found.push({name:P[i].n,sample:m[0]});}
+    }
+  }
+  if(found.length===0){alert('No secrets found in the rendered HTML.');return;}
+  var msg='Found '+found.length+' potential secrets:\\n\\n';
+  for(var j=0;j<Math.min(found.length,20);j++){
+    var s=found[j].sample;
+    if(s.length>50)s=s.substring(0,30)+'...['+s.length+' chars]';
+    msg+=found[j].name+': '+s+'\\n';
+  }
+  if(found.length>20)msg+='\\n... and '+(found.length-20)+' more.';
+  alert(msg);
+})();`;
+
+// Build the bookmarklet URL
+const BOOKMARKLET = "javascript:" + encodeURIComponent(SCANNER_FN);
+$("bookmarklet").setAttribute("href", BOOKMARKLET);
+$("bookmarklet-code").textContent = BOOKMARKLET;
+
+// Local tester
+function scanText(text) {
+  const findings = [];
+  for (const p of PATTERNS) {
+    const re = new RegExp(p.regex.source, "g");
+    const matches = new Set();
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      matches.add(m[0]);
+    }
+    if (matches.size > 0) {
+      findings.push({ name: p.name, samples: [...matches] });
+    }
+  }
+  return findings;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function renderFindings(findings) {
+  const el = $("findings");
+  if (findings.length === 0) {
+    el.innerHTML = `<div class="no-findings">No matches found. (This means no patterns triggered, NOT that the input is safe.)</div>`;
+    return;
+  }
+  let html = "";
+  let totalCount = findings.reduce((s, f) => s + f.samples.length, 0);
+  html += `<h3 style="color: var(--alert);">${totalCount} match${totalCount === 1 ? '' : 'es'} across ${findings.length} pattern${findings.length === 1 ? '' : 's'}</h3>`;
+  for (const f of findings) {
+    html += `<div class="finding">`;
+    html += `<div class="finding-head">`;
+    html += `<div class="finding-type">${escapeHtml(f.name)}</div>`;
+    html += `<div class="finding-count">${f.samples.length} match${f.samples.length === 1 ? '' : 'es'}</div>`;
+    html += `</div>`;
+    for (const s of f.samples.slice(0, 5)) {
+      // Truncate display only, don't reveal long secrets fully
+      let display = s;
+      if (s.length > 60) display = s.substring(0, 30) + "...[" + s.length + " chars]";
+      html += `<div class="finding-sample">${escapeHtml(display)}</div>`;
+    }
+    if (f.samples.length > 5) {
+      html += `<div style="font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.25rem;">...and ${f.samples.length - 5} more.</div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+$("scan-btn").addEventListener("click", () => {
+  const text = $("test-input").value;
+  if (!text.trim()) {
+    $("findings").innerHTML = `<div class="no-findings">Paste some text to scan first.</div>`;
+    return;
+  }
+  renderFindings(scanText(text));
+});
+
+$("clear-btn").addEventListener("click", () => {
+  $("test-input").value = "";
+  $("findings").innerHTML = "";
+});
+
+$("sample-btn").addEventListener("click", () => {
+  $("test-input").value = `// Configuration file leak example
+const config = {
+  openai_api_key: "${"sk-proj-"}abcdefghijklmnopqrstuvwxyz1234567890ABCDEF",
+  github_token: "${"ghp_"}AbCdEfGhIjKlMnOpQrStUvWxYz0123456789",
+  database_url: "postgres://user:pass@host/db",
+  stripe_test: "${"sk_test_"}1234567890abcdefghijklmnop",
+  aws: {
+    access_key: "${"AKIA"}IOSFODNN7EXAMPLE",
+    region: "us-east-1"
+  }
+};
+
+// Logged in stack trace:
+// Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiamFuZSJ9.abc
+
+// Slack incoming webhook bot:
+// ${"xoxb-"}1234567890-1234567890-AbCdEfGhIjKlMnOpQrStUvWx`;
+});
+
+setTheme("light");
+</script>
+</body>
+</html>
