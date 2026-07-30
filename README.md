@@ -73,7 +73,7 @@ The bookmarklet runs entirely in your browser. No data is sent anywhere. The fin
 - Drag the red button from the demo page to your bookmarks bar
 
 **If drag-to-bookmark doesn't work:**
-- Right-click the bookmarks bar → Add bookmark
+- Right-click the bookmarks bar -> Add bookmark
 - Name it "Scan for secrets"
 - URL: paste the `javascript:...` text from the demo page
 

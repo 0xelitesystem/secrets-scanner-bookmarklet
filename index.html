@@ -389,7 +389,11 @@ const PATTERNS = [
   { name: "Slack app/refresh/config token", regex: /\bxox[arsc]-[a-zA-Z0-9-]{20,}\b/g },
   { name: "AWS access key ID", regex: /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g },
   { name: "Google API key", regex: /\bAIza[a-zA-Z0-9_\-]{35}\b/g },
-  { name: "JWT", regex: /\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g },
+  // A JWT's first segment must BEGIN with eyJ, so the character before it cannot be
+  // part of the base64url alphabet. \b allowed a start right after "-" (a base64url
+  // character), which both produced mid-token false positives and made input like
+  // "-eyJ-eyJ-eyJ..." scan the rest of the page from every hyphen (quadratic hang).
+  { name: "JWT", regex: /(?<![A-Za-z0-9_-])eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g },
   { name: "SendGrid API key", regex: /\bSG\.[a-zA-Z0-9_\-]{22}\.[a-zA-Z0-9_\-]{43}\b/g },
   { name: "Mailgun API key", regex: /\bkey-[a-z0-9]{32}\b/g },
   { name: "Stripe live secret", regex: /\bsk_live_[a-zA-Z0-9]{24,}\b/g },
@@ -399,13 +403,20 @@ const PATTERNS = [
   { name: "PEM private key", regex: /-----BEGIN [A-Z ]*PRIVATE KEY-----/g },
 ];
 
+// Both scan loops rebuild each regex from its source, so the authored flags have to
+// be carried across too (the Bearer pattern is /gi and silently became /g without
+// this). "g" is added if missing because both loops drive the regex with exec().
+function scanFlags(rx) {
+  return rx.flags.indexOf("g") === -1 ? rx.flags + "g" : rx.flags;
+}
+
 // The actual scanner code that the bookmarklet runs (must be standalone)
 const SCANNER_FN = `(function(){
-  var P=${JSON.stringify(PATTERNS.map(p => ({ n: p.name, r: p.regex.source })))};
+  var P=${JSON.stringify(PATTERNS.map(p => ({ n: p.name, r: p.regex.source, f: scanFlags(p.regex) })))};
   var src=document.documentElement.outerHTML;
   var found=[];
   for(var i=0;i<P.length;i++){
-    var re=new RegExp(P[i].r,'g');
+    var re=new RegExp(P[i].r,P[i].f);
     var m,seen={};
     while((m=re.exec(src))!==null){
       if(!seen[m[0]]){seen[m[0]]=1;found.push({name:P[i].n,sample:m[0]});}
@@ -431,7 +442,7 @@ $("bookmarklet-code").textContent = BOOKMARKLET;
 function scanText(text) {
   const findings = [];
   for (const p of PATTERNS) {
-    const re = new RegExp(p.regex.source, "g");
+    const re = new RegExp(p.regex.source, scanFlags(p.regex));
     const matches = new Set();
     let m;
     while ((m = re.exec(text)) !== null) {
