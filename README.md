@@ -12,6 +12,10 @@ A bookmarklet that scans the current web page for exposed API keys, tokens, and 
 4. Click the bookmark
 5. An alert box shows pattern matches
 
+## Why this exists
+
+A key pasted into a debug log or an inline script can sit on a live page unnoticed. This bookmarklet checks the rendered page you are looking at in one click. The tool is one HTML file with no tracking, and the scanner never sends what it finds anywhere. MIT licensed.
+
 ## What it scans
 
 The rendered HTML of the current page. This includes:
@@ -67,6 +71,8 @@ False positives are possible. Always inspect findings.
 
 The bookmarklet runs entirely in your browser. No data is sent anywhere. The findings appear in a native `alert()` box. You can verify by reading the source, the entire script is shown on the demo page.
 
+The demo page itself stores only one thing: if you click the theme toggle, your light or dark choice is saved in your browser's localStorage under the key `theme`.
+
 ## How to add it to your bookmarks bar
 
 **Most browsers:**
@@ -80,7 +86,7 @@ The bookmarklet runs entirely in your browser. No data is sent anywhere. The fin
 **On mobile:**
 - Bookmarklets are awkward on mobile. Use the in-browser test panel on the demo page instead.
 
-## Build and run locally
+## Run locally
 
 ```bash
 git clone https://github.com/0xelitesystem/secrets-scanner-bookmarklet
@@ -90,6 +96,10 @@ python -m http.server 8000
 ```
 
 There's no build step. The patterns and scanner are all inline in the single HTML file.
+
+## Build
+
+No build step. The scanner and its patterns are inline in the single `index.html`, and the page generates the bookmarklet from that same source.
 
 ## Contribute
 
