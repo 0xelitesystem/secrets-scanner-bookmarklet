@@ -121,6 +121,6 @@ MIT.
 
 ## Related
 
-- [jwt-inspector](https://github.com/0xelitesystem/jwt-inspector), decode JWTs found by this scanner
+- [jwt-verify-in-browser](https://github.com/0xelitesystem/jwt-verify-in-browser), decode JWTs found by this scanner
 - [byok-security-checklist](https://github.com/0xelitesystem/byok-security-checklist), security checklist for BYOK products
-- [csp-builder](https://github.com/0xelitesystem/csp-builder), Content Security Policy builder
+- [csp-header-visual-builder](https://github.com/0xelitesystem/csp-header-visual-builder), Content Security Policy builder
